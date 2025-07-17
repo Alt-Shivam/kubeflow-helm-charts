@@ -1,9 +1,5 @@
 debug: false
 
-# Global namespace configuration - change this to your desired namespace
-global:
-  namespace: compass-addons
-
 certManager:
   enabled: true
   spec:
@@ -11,7 +7,7 @@ certManager:
     sources:
       - chart: 'cert-manager'
         repoURL: https://charts.jetstack.io
-        targetRevision: "1.14.3"
+        targetRevision: "1.16.1"
         helm:
           releaseName: "cert-manager"
           ignoreMissingValueFiles: true
@@ -35,7 +31,7 @@ istioBase:
     sources:
       - chart: 'base'
         repoURL: 'https://istio-release.storage.googleapis.com/charts'
-        targetRevision: "1.18.7"
+        targetRevision: "1.24.3"
         helm:
           releaseName: "istio-base"
           ignoreMissingValueFiles: true
@@ -57,7 +53,7 @@ istiod:
     sources:
       - chart: 'istiod'
         repoURL: 'https://istio-release.storage.googleapis.com/charts'
-        targetRevision: "1.18.7"
+        targetRevision: "1.24.3"
         helm:
           releaseName: "istiod"
           ignoreMissingValueFiles: true
@@ -90,7 +86,7 @@ gateway:
     sources:
       - chart: 'gateway'
         repoURL: 'https://istio-release.storage.googleapis.com/charts'
-        targetRevision: "1.18.7"
+        targetRevision: "1.24.3"
         helm:
           releaseName: "istio-ingressgateway"
           ignoreMissingValueFiles: true
@@ -123,9 +119,9 @@ dex:
     source:
       path: common/dex/overlays/istio
       repoURL: https://github.com/kubeflow/manifests
-      targetRevision: 776d4f4
+      targetRevision: v1.10.1
     destination:
-      namespace: "{{ .Values.global.namespace }}"
+      namespace: compass-addons
       name: in-cluster
     syncPolicy:
       automated:
@@ -133,16 +129,33 @@ dex:
       syncOptions:
         - ServerSideApply=true
 
-oidcAuthService:
+# oidcAuthService:
+#   enabled: true
+#   spec:
+#     project: default
+#     source:
+#       path: common/oidc-client/oidc-authservice/base
+#       repoURL: https://github.com/kubeflow/manifests
+#       targetRevision: v1.10.1
+#     destination:
+#       namespace: compass-addons
+#       name: in-cluster
+#     syncPolicy:
+#       automated:
+#         prune: false
+#       syncOptions:
+#         - ServerSideApply=true
+# ADD this new component:
+oauth2Proxy:
   enabled: true
   spec:
     project: default
     source:
-      path: common/oidc-client/oidc-authservice/base
+      path: common/oauth2-proxy/overlays/m2m-dex-only
       repoURL: https://github.com/kubeflow/manifests
-      targetRevision: 776d4f4
+      targetRevision: v1.10.1
     destination:
-      namespace: "{{ .Values.global.namespace }}"
+      namespace: compass-addons
       name: in-cluster
     syncPolicy:
       automated:
@@ -157,9 +170,9 @@ kubeflowNamespace:
     source:
       path: common/kubeflow-namespace/base
       repoURL: https://github.com/kubeflow/manifests
-      targetRevision: 776d4f4
+      targetRevision: v1.10.1
     destination:
-      namespace: "{{ .Values.global.namespace }}"
+      namespace: compass-addons
       name: in-cluster
     syncPolicy:
       automated:
@@ -172,11 +185,11 @@ istioResources:
   spec:
     project: default
     source:
-      path: common/istio-1-17/kubeflow-istio-resources/base
+      path: common/istio-1-24/kubeflow-istio-resources/base
       repoURL: https://github.com/kubeflow/manifests
-      targetRevision: 776d4f4
+      targetRevision: v1.10.1
     destination:
-      namespace: "{{ .Values.global.namespace }}"
+      namespace: compass-addons
       name: in-cluster
     syncPolicy:
       automated:
@@ -191,9 +204,9 @@ kubeflowRoles:
     source:
       path: common/kubeflow-roles/base
       repoURL: https://github.com/kubeflow/manifests
-      targetRevision: 776d4f4
+      targetRevision: v1.10.1
     destination:
-      namespace: "{{ .Values.global.namespace }}"
+      namespace: compass-addons
       name: in-cluster
     syncPolicy:
       automated:
@@ -208,9 +221,9 @@ admissionWebhook:
     source:
       path: apps/admission-webhook/upstream/overlays/cert-manager
       repoURL: https://github.com/kubeflow/manifests
-      targetRevision: 776d4f4
+      targetRevision: v1.10.1
     destination:
-      namespace: "{{ .Values.global.namespace }}"
+      namespace: compass-addons
       name: in-cluster
     syncPolicy:
       automated:
@@ -225,49 +238,49 @@ centralDashboard:
     source:
       path: apps/centraldashboard/upstream/overlays/kserve
       repoURL: https://github.com/kubeflow/manifests
-      targetRevision: 776d4f4
+      targetRevision: v1.10.1
       # kustomize:
-      #   patches:
-      #   - target:
-      #       kind: ConfigMap
-      #       name: centraldashboard-config
-      #     patch: |-
-      #       - op: replace
-      #         path: /data/links
-      #         value: |
-      #           {
-      #             "menuLinks": [
-      #               {
-      #                 "type": "item",
-      #                 "link": "/jupyter/",
-      #                 "text": "Notebooks",
-      #                 "icon": "book"
-      #               },
-      #               {
-      #                 "type": "item",
-      #                 "link": "/volumes/",
-      #                 "text": "Volumes",
-      #                 "icon": "device:storage"
-      #               }
-      #             ],
-      #             "externalLinks": [ ],
-      #               "quickLinks": [
-      #                 {
-      #                   "text": "Create a new Notebook server",
-      #                   "desc": "Notebook Servers",
-      #                   "link": "/jupyter/new?namespace=kubeflow"
-      #                 }
-      #               ],
-      #               "documentationItems": [
-      #                 {
-      #                   "text": "Getting Started with Kubeflow",
-      #                   "desc": "Get your machine-learning workflow up and running on Kubeflow",
-      #                   "link": "https://www.kubeflow.org/docs/started/getting-started/"
-      #                 }
-      #               ]
-      #           }
+        # patches:
+        # - target:
+        #     kind: ConfigMap
+        #     name: centraldashboard-config
+        #   patch: |-
+        #     - op: replace
+        #       path: /data/links
+        #       value: |
+        #         {
+        #           "menuLinks": [
+        #             {
+        #               "type": "item",
+        #               "link": "/jupyter/",
+        #               "text": "Notebooks",
+        #               "icon": "book"
+        #             },
+        #             {
+        #               "type": "item",
+        #               "link": "/volumes/",
+        #               "text": "Volumes",
+        #               "icon": "device:storage"
+        #             }
+        #           ],
+        #           "externalLinks": [ ],
+        #             "quickLinks": [
+        #               {
+        #                 "text": "Create a new Notebook server",
+        #                 "desc": "Notebook Servers",
+        #                 "link": "/jupyter/new?namespace=kubeflow"
+        #               }
+        #             ],
+        #             "documentationItems": [
+        #               {
+        #                 "text": "Getting Started with Kubeflow",
+        #                 "desc": "Get your machine-learning workflow up and running on Kubeflow",
+        #                 "link": "https://www.kubeflow.org/docs/started/getting-started/"
+        #               }
+        #             ]
+        #         }
     destination:
-      namespace: "{{ .Values.global.namespace }}"
+      namespace: compass-addons
       name: in-cluster
     syncPolicy:
       automated:
@@ -282,9 +295,9 @@ jupyterWebApp:
     source:
       path: apps/jupyter/jupyter-web-app/upstream/overlays/istio
       repoURL: https://github.com/kubeflow/manifests
-      targetRevision: 776d4f4
+      targetRevision: v1.10.1
     destination:
-      namespace: "{{ .Values.global.namespace }}"
+      namespace: compass-addons
       name: in-cluster
     syncPolicy:
       automated:
@@ -299,9 +312,9 @@ notebookController:
     source:
       path: apps/jupyter/notebook-controller/upstream/overlays/kubeflow
       repoURL: https://github.com/kubeflow/manifests
-      targetRevision: 776d4f4
+      targetRevision: v1.10.1
     destination:
-      namespace: "{{ .Values.global.namespace }}"
+      namespace: compass-addons
       name: in-cluster
     syncPolicy:
       automated:
@@ -316,9 +329,9 @@ profiles:
     source:
       path: apps/profiles/upstream/overlays/kubeflow
       repoURL: https://github.com/kubeflow/manifests
-      targetRevision: 776d4f4
+      targetRevision: v1.10.1
     destination:
-      namespace: "{{ .Values.global.namespace }}"
+      namespace: compass-addons
       name: in-cluster
     syncPolicy:
       automated:
@@ -333,9 +346,9 @@ pvcViewerController:
     source:
       path: apps/pvcviewer-controller/upstream/default
       repoURL: https://github.com/kubeflow/manifests
-      targetRevision: 776d4f4
+      targetRevision: v1.10.1
     destination:
-      namespace: "{{ .Values.global.namespace }}"
+      namespace: compass-addons
       name: in-cluster
     syncPolicy:
       automated:
@@ -350,9 +363,9 @@ volumesWebApp:
     source:
       path: apps/volumes-web-app/upstream/overlays/istio
       repoURL: https://github.com/kubeflow/manifests
-      targetRevision: 776d4f4
+      targetRevision: v1.10.1
     destination:
-      namespace: "{{ .Values.global.namespace }}"
+      namespace: compass-addons
       name: in-cluster
     syncPolicy:
       automated:
@@ -367,9 +380,9 @@ exampleProfile:
     source:
       path: common/user-namespace/base
       repoURL: https://github.com/kubeflow/manifests
-      targetRevision: 776d4f4
+      targetRevision: v1.10.1
     destination:
-      namespace: "{{ .Values.global.namespace }}"
+      namespace: compass-addons
       name: in-cluster
     syncPolicy:
       automated:
@@ -384,7 +397,7 @@ knativeServing:
     source:
       path: common/knative/knative-serving/overlays/gateways
       repoURL: https://github.com/kubeflow/manifests
-      targetRevision: 776d4f4
+      targetRevision: v1.10.1
       kustomize:
         patches:
         - target:
@@ -428,7 +441,7 @@ knativeServing:
               path: /spec/template/spec/containers/0/resources/requests/cpu
               value: 15m
     destination:
-      namespace: "{{ .Values.global.namespace }}"
+      namespace: compass-addons
       name: in-cluster
     syncPolicy:
       automated:
@@ -441,9 +454,9 @@ clusterLocalGateway:
   spec:
     project: default
     source:
-      path: common/istio-1-17/cluster-local-gateway/base
+      path: common/istio-1-24/cluster-local-gateway/base
       repoURL: https://github.com/kubeflow/manifests
-      targetRevision: 776d4f4
+      targetRevision: v1.10.1
       kustomize:
         patches:
         - target:
@@ -455,7 +468,7 @@ clusterLocalGateway:
               path: /spec/template/spec/containers/0/resources/requests/cpu
               value: 10m
     destination:
-      namespace: "{{ .Values.global.namespace }}"
+      namespace: compass-addons
       name: in-cluster
     syncPolicy:
       automated:
@@ -470,7 +483,7 @@ kserve:
     source:
       path: contrib/kserve/kserve
       repoURL: https://github.com/kubeflow/manifests
-      targetRevision: 776d4f4
+      targetRevision: v1.10.1
       kustomize:
         patches:
         - target:
@@ -482,7 +495,7 @@ kserve:
               path: /spec/template/spec/containers/0/resources/requests/cpu
               value: 15m
     destination:
-      namespace: "{{ .Values.global.namespace }}"
+      namespace: compass-addons
       name: in-cluster
     syncPolicy:
       automated:
@@ -497,9 +510,9 @@ katib:
     source:
       path: apps/katib/upstream/installs/katib-with-kubeflow
       repoURL: https://github.com/kubeflow/manifests
-      targetRevision: 776d4f4
+      targetRevision: v1.10.1
     destination:
-      namespace: "{{ .Values.global.namespace }}"
+      namespace: compass-addons
       name: in-cluster
     syncPolicy:
       automated:
@@ -514,9 +527,9 @@ modelsWebApp:
     source:
       path: contrib/kserve/models-web-app/overlays/kubeflow
       repoURL: https://github.com/kubeflow/manifests
-      targetRevision: 776d4f4
+      targetRevision: v1.10.1
     destination:
-      namespace: "{{ .Values.global.namespace }}"
+      namespace: compass-addons
       name: in-cluster
     syncPolicy:
       automated:
@@ -531,7 +544,7 @@ kubeflowPipelines:
     source:
       path: apps/pipeline/upstream/env/cert-manager/platform-agnostic-multi-user
       repoURL: https://github.com/kubeflow/manifests
-      targetRevision: 776d4f4
+      targetRevision: v1.10.1
       kustomize:
         patches:
         - target:
@@ -575,7 +588,7 @@ kubeflowPipelines:
               path: /spec/template/spec/containers/0/resources/requests/cpu
               value: 10m
     destination:
-      namespace: "{{ .Values.global.namespace }}"
+      namespace: compass-addons
       name: in-cluster
     syncPolicy:
       automated:
@@ -590,9 +603,9 @@ tensorboardController:
     source:
       path: apps/tensorboard/tensorboard-controller/upstream/overlays/kubeflow
       repoURL: https://github.com/kubeflow/manifests
-      targetRevision: 776d4f4
+      targetRevision: v1.10.1
     destination:
-      namespace: "{{ .Values.global.namespace }}"
+      namespace: compass-addons
       name: in-cluster
     syncPolicy:
       automated:
@@ -607,9 +620,9 @@ tensorboardsWebApp:
     source:
       path: apps/tensorboard/tensorboards-web-app/upstream/overlays/istio
       repoURL: https://github.com/kubeflow/manifests
-      targetRevision: 776d4f4
+      targetRevision: v1.10.1
     destination:
-      namespace: "{{ .Values.global.namespace }}"
+      namespace: compass-addons
       name: in-cluster
     syncPolicy:
       automated:
@@ -647,7 +660,7 @@ sparkOperator:
     sources:
       - chart: 'spark-operator'
         repoURL: 'https://kubeflow.github.io/spark-operator'
-        targetRevision: "1.1.27"
+        targetRevision: "2.1.1"
         helm:
           releaseName: "spark-operator"
           ignoreMissingValueFiles: true
@@ -660,4 +673,39 @@ sparkOperator:
         prune: false
       syncOptions:
         - CreateNamespace=true
+        - ServerSideApply=true
+
+## NEW ADDITIONS
+trainingOperator:
+  enabled: false
+  spec:
+    project: default
+    source:
+      path: apps/training-operator/upstream/overlays/kubeflow
+      repoURL: https://github.com/kubeflow/manifests
+      targetRevision: v1.10.1
+    destination:
+      namespace: compass-addons
+      name: in-cluster
+    syncPolicy:
+      automated:
+        prune: false
+      syncOptions:
+        - ServerSideApply=true
+
+modelRegistry:
+  enabled: false
+  spec:
+    project: default
+    source:
+      path: apps/model-registry/upstream/overlays/db
+      repoURL: https://github.com/kubeflow/manifests
+      targetRevision: v1.10.1
+    destination:
+      namespace: compass-addons
+      name: in-cluster
+    syncPolicy:
+      automated:
+        prune: false
+      syncOptions:
         - ServerSideApply=true

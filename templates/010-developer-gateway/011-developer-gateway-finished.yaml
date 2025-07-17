@@ -2,7 +2,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: 011-core-finished
-  namespace: {{ .Values.global.namespace }}
+  namespace: compass-addons
   annotations:
     argocd.argoproj.io/sync-wave: "11"
 spec:
